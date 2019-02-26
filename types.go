@@ -41,43 +41,43 @@ func (d hash) empty() bool {
 	return d == hash(0)
 }
 
-type bucket struct {
+type Bucket struct {
 	dataSum data
 	hashSum hash
 	count   int
 }
 
-func NewBucket(len int) bucket {
-	return bucket{
+func NewBucket(len int) Bucket {
+	return Bucket{
 		dataSum: make(data, len),
 		hashSum: hash(0),
 		count:   0,
 	}
 }
 
-func (b *bucket) xor(a bucket) {
+func (b *Bucket) xor(a Bucket) {
 	b.dataSum.xor(a.dataSum)
 	b.hashSum.xor(a.hashSum)
 }
 
-func (b *bucket) add(a bucket) {
+func (b *Bucket) add(a Bucket) {
 	b.xor(a)
 	b.count = b.count + a.count
 }
 
-func (b *bucket) subtract(a bucket) {
+func (b *Bucket) subtract(a Bucket) {
 	b.xor(a)
 	b.count = b.count - a.count
 }
 
-func (b *bucket) put(d data) {
+func (b *Bucket) put(d data) {
 	b.dataSum.xor(d)
 	h := sipHash(d)
 	b.hashSum.xor(hash(h))
 	b.count++
 }
 
-func (b bucket) pure() bool {
+func (b Bucket) pure() bool {
 	if b.count == 1 || b.count == -1 {
 		h := sipHash(b.dataSum)
 		if b.hashSum == hash(h) {
@@ -87,13 +87,13 @@ func (b bucket) pure() bool {
 	return false
 }
 
-func (b bucket) empty() bool {
+func (b Bucket) empty() bool {
 	return b.count == 0 &&
 		b.hashSum.empty() &&
 		b.dataSum.empty()
 }
 
-func (b bucket) String() string {
-	return fmt.Sprintf("bucket: dataSum: %v, hashSum: %v, count: %d",
+func (b Bucket) String() string {
+	return fmt.Sprintf("Bucket: dataSum: %v, hashSum: %v, count: %d",
 		b.dataSum, b.hashSum, b.count)
 }

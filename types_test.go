@@ -33,5 +33,18 @@ func TestHashXor(t *testing.T) {
 
 func TestBucket_String(t *testing.T) {
 	b := NewBucket(2)
-	fmt.Println(&b)
+	fmt.Println(b.empty())
+	b.put([]byte{1, 3})
+	fmt.Println(b)
+	fmt.Println(b.pure())
+	fmt.Println(b.empty())
+	b.put([]byte{1, 4})
+	fmt.Println(b)
+	fmt.Println(b.pure())
+
+	b1 := NewBucket(2)
+	b1.put([]byte{1, 3})
+	b.subtract(b1)
+	fmt.Println(b)
+	fmt.Println(b.pure())
 }
