@@ -82,6 +82,13 @@ func (b *Bucket) put(d data) {
 	b.count++
 }
 
+func (b *Bucket) take(d data) {
+	b.dataSum.xor(d)
+	h := sipHash(d)
+	b.hashSum.xor(hash(h))
+	b.count--
+}
+
 func (b Bucket) copy() *Bucket {
 	bkt := NewBucket(len(b.dataSum))
 	copy(bkt.dataSum, b.dataSum)

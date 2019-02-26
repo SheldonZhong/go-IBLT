@@ -3,6 +3,7 @@ package iblt
 import (
 	"errors"
 	"github.com/dchest/siphash"
+	"github.com/golang-collections/collections/queue"
 	"github.com/willf/bitset"
 )
 
@@ -34,6 +35,18 @@ func (t *Table) Insert(d []byte) error {
 
 	for i, e := t.bitsSet.NextSet(0); e; i, e = t.bitsSet.NextSet(i + 1) {
 		t.put(i, d)
+	}
+	return nil
+}
+
+func (t *Table) Delete(d []byte) error {
+	err := t.index(d)
+	if err != nil {
+		return err
+	}
+
+	for i, e := t.bitsSet.NextSet(0); e; i, e = t.bitsSet.NextSet(i + 1) {
+		t.take(i, d)
 	}
 	return nil
 }
@@ -85,7 +98,47 @@ func (t *Table) Subtract(a *Table) error {
 	return err
 }
 
+// Decode is self-destructive
 func (t *Table) Decode() error {
+	pure := queue.New()
+	for i := range t.buckets {
+		if t.buckets[i] != nil && t.buckets[i].pure() {
+			pure.Enqueue(t.buckets[i])
+		}
+	}
+
+	if pure.Len() == 0 {
+		return errors.New("no pure cells in table")
+	}
+
+	bkt := NewBucket(t.dataLen)
+	for {
+		for i := range t.buckets {
+			if t.buckets[i] != nil && t.buckets[i].pure() {
+				pure.Enqueue(t.buckets[i])
+			}
+		}
+
+		if pure.Len() == 0 {
+			break
+		}
+
+		for pure.Len() > 0 {
+			bkt = pure.Dequeue().(*Bucket)
+			// TODO: export elements
+			err := t.Delete(bkt.dataSum)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for i := range t.buckets {
+		if t.buckets[i] != nil && !t.buckets[i].empty() {
+			return errors.New("dirty entries remained")
+		}
+	}
+
 	return nil
 }
 
@@ -114,4 +167,11 @@ func (t *Table) put(idx uint, d []byte) {
 		t.buckets[idx] = NewBucket(t.dataLen)
 	}
 	t.buckets[idx].put(d)
+}
+
+func (t *Table) take(idx uint, d []byte) {
+	if t.buckets[idx] == nil {
+		t.buckets[idx] = NewBucket(t.dataLen)
+	}
+	t.buckets[idx].take(d)
 }
