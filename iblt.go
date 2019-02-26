@@ -27,8 +27,24 @@ func NewTable(buckets uint, dataLen int, hashNum int, ) *Table {
 }
 
 func (t *Table) Insert(d []byte) error {
+	err := t.index(d)
+	if err != nil {
+		return err
+	}
+
+	for i, e := t.bitsSet.NextSet(0); e; i, e = t.bitsSet.NextSet(i + 1) {
+		t.put(i, d)
+	}
+	return nil
+}
+
+func (t *Table) index(d []byte) error {
 	if len(d) != t.dataLen {
 		return errors.New("insert byte length mismatches base data length")
+	}
+
+	if t.bitsSet == nil {
+		t.bitsSet = bitset.New(t.bktNum)
 	}
 
 	t.bitsSet.ClearAll()
@@ -41,11 +57,11 @@ func (t *Table) Insert(d []byte) error {
 		// TODO: modulate produces imbalanced uniform distribution
 		idx := uint(h) % t.bktNum
 		if !t.bitsSet.Test(idx) {
-			t.put(idx, d)
 			t.bitsSet.Set(idx)
 			i++
 		}
 	}
+
 	return nil
 }
 
@@ -67,6 +83,10 @@ func (t *Table) Subtract(a *Table) error {
 	}
 
 	return err
+}
+
+func (t *Table) Decode() error {
+	return nil
 }
 
 func (t Table) check(a *Table) error {
