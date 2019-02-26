@@ -67,7 +67,7 @@ func (t *Table) index(d []byte) error {
 		// as this is in high probability
 		h := siphash.Hash(key0, uint64(key1+tries), d)
 		tries++
-		// TODO: modulate produces imbalanced uniform distribution
+		// TODO: modulo produces imbalanced uniform distribution
 		idx := uint(h) % t.bktNum
 		if !t.bitsSet.Test(idx) {
 			t.bitsSet.Set(idx)
@@ -99,47 +99,50 @@ func (t *Table) Subtract(a *Table) error {
 }
 
 // Decode is self-destructive
-func (t *Table) Decode() error {
+func (t *Table) Decode() (*Diff, error) {
 	pure := queue.New()
 	for i := range t.buckets {
 		if t.buckets[i] != nil && t.buckets[i].pure() {
 			pure.Enqueue(t.buckets[i])
 		}
 	}
-
+	// ensure we have at least one pure bucket ini the IBLT
+	// this is necessary condition for decoding an IBLT
 	if pure.Len() == 0 {
-		return errors.New("no pure cells in table")
+		return nil, errors.New("no pure buckets in table")
 	}
 
+	diff := NewDiff()
 	bkt := NewBucket(t.dataLen)
-	for {
+	for pure.Len() > 0 {
+		// clean out pure queue, delete all pure buckets and output the stored data
+		// it will create more pure buckets to decode in the next cycle
+		for pure.Len() > 0 {
+			bkt = pure.Dequeue().(*Bucket)
+			diff.encode(bkt)
+			err := t.Delete(bkt.dataSum)
+			if err != nil {
+				return diff, err
+			}
+		}
+		// now pure queue should be empty, enqueue more pure cell
 		for i := range t.buckets {
 			if t.buckets[i] != nil && t.buckets[i].pure() {
 				pure.Enqueue(t.buckets[i])
 			}
 		}
-
-		if pure.Len() == 0 {
-			break
-		}
-
-		for pure.Len() > 0 {
-			bkt = pure.Dequeue().(*Bucket)
-			// TODO: export elements
-			err := t.Delete(bkt.dataSum)
-			if err != nil {
-				return err
-			}
-		}
+		// no more bucket is pure either
+		// 1) we have successfully decoded all the possible buckets and all the buckets should be empty
+		// 2) we have hash collision for more than two items
 	}
-
+	// check if every bucket is empty
 	for i := range t.buckets {
 		if t.buckets[i] != nil && !t.buckets[i].empty() {
-			return errors.New("dirty entries remained")
+			return diff, errors.New("dirty entries remained")
 		}
 	}
 
-	return nil
+	return diff, nil
 }
 
 func (t Table) check(a *Table) error {

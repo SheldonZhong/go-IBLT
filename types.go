@@ -117,3 +117,36 @@ func (b Bucket) String() string {
 	return fmt.Sprintf("Bucket: dataSum: %v, hashSum: %v, count: %d",
 		b.dataSum, b.hashSum, b.count)
 }
+
+// each part of symmetric difference
+type Diff struct {
+	Alpha [][]byte
+	Beta  [][]byte
+}
+
+func NewDiff() *Diff {
+	return &Diff{}
+}
+
+// assume b is pure bucket
+func (d *Diff) encode(b *Bucket) {
+	if b.count == 1 {
+		d.Alpha = append(d.Alpha, b.dataSum)
+	}
+	if b.count == -1 {
+		d.Beta = append(d.Beta, b.dataSum)
+	}
+}
+
+func (d Diff) String() string {
+	s := "Symmetric Difference:\n"
+	for i, b := range d.Alpha {
+		s += fmt.Sprintf("Alpha:%d:%v\n", i, b)
+	}
+
+	for i, b := range d.Beta {
+		s += fmt.Sprintf("Beta:%d:%v\n", i, b)
+	}
+
+	return s
+}
