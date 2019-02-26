@@ -5,9 +5,14 @@ import (
 	"github.com/dchest/siphash"
 )
 
+const (
+	key0 = 465
+	key1 = 629
+)
+
 func sipHash(b []byte) uint64 {
 	// TODO: key constants
-	return siphash.Hash(465, 629, b)
+	return siphash.Hash(key0, key1, b)
 }
 
 type data []byte
@@ -47,8 +52,8 @@ type Bucket struct {
 	count   int
 }
 
-func NewBucket(len int) Bucket {
-	return Bucket{
+func NewBucket(len int) *Bucket {
+	return &Bucket{
 		dataSum: make(data, len),
 		hashSum: hash(0),
 		count:   0,
