@@ -28,7 +28,7 @@ func NewTable(buckets uint, dataLen int, hashNum int, ) *Table {
 
 func (t *Table) Insert(d []byte) error {
 	if len(d) != t.dataLen {
-		return errors.New("mismatched data length")
+		return errors.New("insert byte length mismatches base data length")
 	}
 
 	t.bitsSet.ClearAll()
@@ -46,6 +46,46 @@ func (t *Table) Insert(d []byte) error {
 			i++
 		}
 	}
+	return nil
+}
+
+// Modify callee
+func (t *Table) Subtract(a *Table) error {
+	err := t.check(a)
+	if err != nil {
+		return err
+	}
+
+	for i := range t.buckets {
+		if t.buckets[i] != nil && a.buckets[i] != nil {
+			t.buckets[i].subtract(a.buckets[i])
+		}
+		if t.buckets[i] == nil && a.buckets[i] != nil {
+			t.buckets[i] = a.buckets[i].copy()
+			t.buckets[i].count = -t.buckets[i].count
+		}
+	}
+
+	return err
+}
+
+func (t Table) check(a *Table) error {
+	if t.bktNum != a.bktNum {
+		return errors.New("subtract table mismatches bucket number")
+	}
+
+	if t.dataLen != a.dataLen {
+		return errors.New("subtract table mismatches data length")
+	}
+
+	if t.hashNum != a.hashNum {
+		return errors.New("subtract table mismatches number of hash functions")
+	}
+
+	if len(t.buckets) != len(a.buckets) {
+		return errors.New("illegally appended buckets")
+	}
+
 	return nil
 }
 

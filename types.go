@@ -60,17 +60,17 @@ func NewBucket(len int) *Bucket {
 	}
 }
 
-func (b *Bucket) xor(a Bucket) {
+func (b *Bucket) xor(a *Bucket) {
 	b.dataSum.xor(a.dataSum)
 	b.hashSum.xor(a.hashSum)
 }
 
-func (b *Bucket) add(a Bucket) {
+func (b *Bucket) add(a *Bucket) {
 	b.xor(a)
 	b.count = b.count + a.count
 }
 
-func (b *Bucket) subtract(a Bucket) {
+func (b *Bucket) subtract(a *Bucket) {
 	b.xor(a)
 	b.count = b.count - a.count
 }
@@ -80,6 +80,14 @@ func (b *Bucket) put(d data) {
 	h := sipHash(d)
 	b.hashSum.xor(hash(h))
 	b.count++
+}
+
+func (b Bucket) copy() *Bucket {
+	bkt := NewBucket(len(b.dataSum))
+	copy(bkt.dataSum, b.dataSum)
+	bkt.hashSum = b.hashSum
+	bkt.count = b.count
+	return bkt
 }
 
 func (b Bucket) pure() bool {
