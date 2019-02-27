@@ -104,18 +104,11 @@ func (t *Table) Subtract(a *Table) error {
 func (t *Table) Decode() (*Diff, error) {
 	pure := queue.New()
 	pureMask := bitset.New(t.bitsSet.Len())
-	for i := range t.buckets {
-		// skip the same pure bucket at difference indexes, enqueue the first one
-		if !pureMask.Test(uint(i)) && t.buckets[i] != nil && t.buckets[i].pure() {
-			err := t.index(t.buckets[i].dataSum)
-			if err != nil {
-				return nil, err
-			}
-			pureMask.InPlaceUnion(t.bitsSet)
-			pure.Enqueue(t.buckets[i])
-		}
+	err := t.enqueuePure(pureMask, pure)
+	if err != nil {
+		return nil, err
 	}
-	// ensure we have at least one pure bucket ini the IBLT
+	// ensure we have at least one pure bucket in the IBLT
 	// this is necessary condition for decoding an IBLT
 	if pure.Len() == 0 {
 		return nil, errors.New("no pure buckets in table")
@@ -130,21 +123,15 @@ func (t *Table) Decode() (*Diff, error) {
 			bkt = pure.Dequeue().(*Bucket)
 			diff.encode(bkt)
 			// Delete would possibly delete pure buckets that stored in queue before
-			err := t.Delete(bkt.dataSum)
+			err = t.Delete(bkt.dataSum)
 			if err != nil {
 				return diff, err
 			}
 		}
 		// now pure queue should be empty, enqueue more pure cell
-		for i := range t.buckets {
-			if !pureMask.Test(uint(i)) && t.buckets[i] != nil && t.buckets[i].pure() {
-				err := t.index(t.buckets[i].dataSum)
-				if err != nil {
-					return nil, err
-				}
-				pureMask.InPlaceUnion(t.bitsSet)
-				pure.Enqueue(t.buckets[i])
-			}
+		err = t.enqueuePure(pureMask, pure)
+		if err != nil {
+			return diff, err
 		}
 		// no more bucket is pure either
 		// 1) we have successfully decoded all the possible buckets and all the buckets should be empty
@@ -158,6 +145,21 @@ func (t *Table) Decode() (*Diff, error) {
 	}
 
 	return diff, nil
+}
+
+func (t *Table) enqueuePure(pureMask *bitset.BitSet, pure *queue.Queue) error {
+	for i := range t.buckets {
+		// skip the same pure bucket at difference indexes, enqueue the first one
+		if !pureMask.Test(uint(i)) && t.buckets[i] != nil && t.buckets[i].pure() {
+			err := t.index(t.buckets[i].dataSum)
+			if err != nil {
+				return err
+			}
+			pureMask.InPlaceUnion(t.bitsSet)
+			pure.Enqueue(t.buckets[i])
+		}
+	}
+	return nil
 }
 
 func (t Table) check(a *Table) error {

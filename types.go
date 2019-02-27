@@ -130,11 +130,13 @@ func NewDiff() *Diff {
 
 // assume b is pure bucket
 func (d *Diff) encode(b *Bucket) {
+	cpy := make([]byte, len(b.dataSum))
+	copy(cpy, b.dataSum)
 	if b.count == 1 {
-		d.Alpha = append(d.Alpha, b.dataSum)
+		d.Alpha = append(d.Alpha, cpy)
 	}
 	if b.count == -1 {
-		d.Beta = append(d.Beta, b.dataSum)
+		d.Beta = append(d.Beta, cpy)
 	}
 }
 
