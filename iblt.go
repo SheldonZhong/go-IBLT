@@ -28,13 +28,15 @@ func NewTable(buckets uint, dataLen int, hashNum int, ) *Table {
 }
 
 func (t *Table) Insert(d []byte) error {
-	err := t.index(d)
+	cpy := make([]byte, len(d))
+	copy(cpy, d)
+	err := t.index(cpy)
 	if err != nil {
 		return err
 	}
 
 	for i, e := t.bitsSet.NextSet(0); e; i, e = t.bitsSet.NextSet(i + 1) {
-		t.put(i, d)
+		t.put(i, cpy)
 	}
 	return nil
 }
@@ -103,8 +105,7 @@ func (t *Table) Subtract(a *Table) error {
 // Decode is self-destructive
 func (t *Table) Decode() (*Diff, error) {
 	pure := queue.New()
-	pureMask := bitset.New(t.bitsSet.Len())
-	err := t.enqueuePure(pureMask, pure)
+	err := t.enqueuePure(pure)
 	if err != nil {
 		return nil, err
 	}
@@ -123,13 +124,17 @@ func (t *Table) Decode() (*Diff, error) {
 			bkt = pure.Dequeue().(*Bucket)
 			diff.encode(bkt)
 			// Delete would possibly delete pure buckets that stored in queue before
-			err = t.Delete(bkt.dataSum)
+			if bkt.count > 0 {
+				err = t.Delete(bkt.dataSum)
+			} else {
+				err = t.Insert(bkt.dataSum)
+			}
 			if err != nil {
 				return diff, err
 			}
 		}
 		// now pure queue should be empty, enqueue more pure cell
-		err = t.enqueuePure(pureMask, pure)
+		err = t.enqueuePure(pure)
 		if err != nil {
 			return diff, err
 		}
@@ -147,7 +152,8 @@ func (t *Table) Decode() (*Diff, error) {
 	return diff, nil
 }
 
-func (t *Table) enqueuePure(pureMask *bitset.BitSet, pure *queue.Queue) error {
+func (t *Table) enqueuePure(pure *queue.Queue) error {
+	pureMask := bitset.New(t.bitsSet.Len())
 	for i := range t.buckets {
 		// skip the same pure bucket at difference indexes, enqueue the first one
 		if !pureMask.Test(uint(i)) && t.buckets[i] != nil && t.buckets[i].pure() {
