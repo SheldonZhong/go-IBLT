@@ -80,7 +80,7 @@ func (t *Table) index(d []byte) error {
 	return nil
 }
 
-// Modify callee
+// Modify callee, t = t - a
 func (t *Table) Subtract(a *Table) error {
 	err := t.check(a)
 	if err != nil {

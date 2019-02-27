@@ -1,26 +1,38 @@
 package iblt
 
 import (
-	"fmt"
-	"github.com/dchest/siphash"
+	"math/rand"
 	"testing"
 )
 
-var testKey = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}
-
-func TestIBLT(t *testing.T) {
-	h := siphash.New(testKey)
-	fmt.Println(h.Write([]byte{1, 2, 3, 4, 5}))
-	fmt.Println(h.Sum(nil))
-
-	table := NewTable(40, 8, 4)
-	err := table.Insert(h.Sum(nil))
-	if err != nil {
-		fmt.Println("err", err)
+func TestTable_Insert(t *testing.T) {
+	tests := []struct {
+		dataLen int
+		hashNum int
+		bktNum  uint
+		items   int
+	}{
+		{4, 4, 80, 10},
+		{4, 4, 80, 13},
+		{4, 4, 120, 25},
+		{4, 4, 1024, 50},
 	}
-	d, err := table.Decode()
-	if err != nil {
-		fmt.Println("err", err)
+
+	for _, test := range tests {
+		b := make([]byte, test.dataLen)
+		table := NewTable(test.bktNum, test.dataLen, test.hashNum)
+		for i := 0; i < test.items; i ++ {
+			rand.Read(b)
+			if err := table.Insert(b); err != nil {
+				t.Errorf("test Insert failed error: %v", err)
+			}
+		}
+		diff, err := table.Decode()
+		if err != nil {
+			t.Errorf("test Decode failed error: %v", err)
+		}
+		if len(diff.Alpha) != test.items {
+			t.Errorf("output number of difference mismatch want: %d, get: %d", test.items, len(diff.Alpha))
+		}
 	}
-	fmt.Println(d)
 }
