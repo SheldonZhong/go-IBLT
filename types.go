@@ -100,6 +100,7 @@ func (b Bucket) copy() *Bucket {
 func (b Bucket) pure() bool {
 	if b.count == 1 || b.count == -1 {
 		h := sipHash(b.dataSum)
+		fmt.Printf("pure: hash: %v, data: %v\n", hash(h), b.dataSum)
 		if b.hashSum == hash(h) {
 			return true
 		}

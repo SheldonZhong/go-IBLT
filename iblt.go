@@ -2,6 +2,7 @@ package iblt
 
 import (
 	"errors"
+	"fmt"
 	"github.com/dchest/siphash"
 	"github.com/golang-collections/collections/queue"
 	"github.com/willf/bitset"
@@ -35,9 +36,13 @@ func (t *Table) Insert(d []byte) error {
 		return err
 	}
 
+	s := ""
 	for i, e := t.bitsSet.NextSet(0); e; i, e = t.bitsSet.NextSet(i + 1) {
 		t.put(i, cpy)
+		s += fmt.Sprintf("%d ", i)
 	}
+
+	fmt.Println("insert", cpy, s)
 	return nil
 }
 
@@ -48,10 +53,13 @@ func (t *Table) Delete(d []byte) error {
 	if err != nil {
 		return err
 	}
-
+	s := ""
 	for i, e := t.bitsSet.NextSet(0); e; i, e = t.bitsSet.NextSet(i + 1) {
 		t.take(i, cpy)
+		s += fmt.Sprintf("%d ", i)
 	}
+	fmt.Println("delete", cpy, s)
+
 	return nil
 }
 
