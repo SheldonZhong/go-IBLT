@@ -75,18 +75,15 @@ func (b *Bucket) subtract(a *Bucket) {
 	b.count = b.count - a.count
 }
 
-func (b *Bucket) put(d data) {
+func (b *Bucket) operate(d data, sign bool) {
 	b.dataSum.xor(d)
 	h := sipHash(d)
 	b.hashSum.xor(hash(h))
-	b.count++
-}
-
-func (b *Bucket) take(d data) {
-	b.dataSum.xor(d)
-	h := sipHash(d)
-	b.hashSum.xor(hash(h))
-	b.count--
+	if sign {
+		b.count++
+	} else {
+		b.count--
+	}
 }
 
 func (b Bucket) copy() *Bucket {
@@ -138,6 +135,14 @@ func (d *Diff) encode(b *Bucket) {
 	if b.count == -1 {
 		d.Beta = append(d.Beta, cpy)
 	}
+}
+
+func (d Diff) AlphaItems() int {
+	return len(d.Alpha)
+}
+
+func (d Diff) BetaItems() int {
+	return len(d.Beta)
 }
 
 func (d Diff) String() string {

@@ -11,6 +11,8 @@ type Table struct {
 	dataLen int
 	hashNum int
 	bktNum  uint
+	items   int
+	oItems  int
 	buckets []*Bucket
 	bitsSet *bitset.BitSet
 }
@@ -21,27 +23,30 @@ func NewTable(buckets uint, dataLen int, hashNum int, ) *Table {
 		dataLen: dataLen,
 		hashNum: hashNum,
 		bktNum:  buckets,
-		// TODO: save space by embedding index in bucket
 		buckets: make([]*Bucket, buckets),
 		bitsSet: bitset.New(buckets),
 	}
 }
 
 func (t *Table) Insert(d []byte) error {
-	cpy := make([]byte, len(d))
-	copy(cpy, d)
-	err := t.index(cpy)
-	if err != nil {
+	if err := t.operate(d, true); err != nil {
 		return err
 	}
+	t.items++
 
-	for i, e := t.bitsSet.NextSet(0); e; i, e = t.bitsSet.NextSet(i + 1) {
-		t.put(i, cpy)
-	}
 	return nil
 }
 
 func (t *Table) Delete(d []byte) error {
+	if err := t.operate(d, false); err != nil {
+		return err
+	}
+	t.items--
+
+	return nil
+}
+
+func (t *Table) operate(d []byte, sign bool) error {
 	cpy := make([]byte, len(d))
 	copy(cpy, d)
 	err := t.index(cpy)
@@ -50,8 +55,9 @@ func (t *Table) Delete(d []byte) error {
 	}
 
 	for i, e := t.bitsSet.NextSet(0); e; i, e = t.bitsSet.NextSet(i + 1) {
-		t.take(i, cpy)
+		t.operateBucket(i, cpy, sign)
 	}
+
 	return nil
 }
 
@@ -98,8 +104,9 @@ func (t *Table) Subtract(a *Table) error {
 			t.buckets[i].count = -t.buckets[i].count
 		}
 	}
+	t.oItems = a.items
 
-	return err
+	return nil
 }
 
 // Decode is self-destructive
@@ -123,13 +130,8 @@ func (t *Table) Decode() (*Diff, error) {
 		for pure.Len() > 0 {
 			bkt = pure.Dequeue().(*Bucket)
 			diff.encode(bkt)
-			// Delete would possibly delete pure buckets that stored in queue before
-			if bkt.count > 0 {
-				err = t.Delete(bkt.dataSum)
-			} else {
-				err = t.Insert(bkt.dataSum)
-			}
-			if err != nil {
+			// Insert if count < 0, Delete if count > 0
+			if err = t.operate(bkt.dataSum, bkt.count < 0); err != nil {
 				return diff, err
 			}
 		}
@@ -148,8 +150,21 @@ func (t *Table) Decode() (*Diff, error) {
 			return diff, errors.New("dirty entries remained")
 		}
 	}
+	// check number of elements for the results
+	if err = t.diffCheck(diff); err != nil {
+		return diff, err
+	}
 
 	return diff, nil
+}
+
+// to keep data integrity, number of items should match
+func (t Table) diffCheck(diff *Diff) error {
+	if t.items-diff.AlphaItems() != t.oItems-diff.BetaItems() {
+		return errors.New("number of common elements mismatch")
+	}
+
+	return nil
 }
 
 func (t *Table) enqueuePure(pure *queue.Queue) error {
@@ -188,16 +203,9 @@ func (t Table) check(a *Table) error {
 	return nil
 }
 
-func (t *Table) put(idx uint, d []byte) {
+func (t *Table) operateBucket(idx uint, d []byte, sign bool) {
 	if t.buckets[idx] == nil {
 		t.buckets[idx] = NewBucket(t.dataLen)
 	}
-	t.buckets[idx].put(d)
-}
-
-func (t *Table) take(idx uint, d []byte) {
-	if t.buckets[idx] == nil {
-		t.buckets[idx] = NewBucket(t.dataLen)
-	}
-	t.buckets[idx].take(d)
+	t.buckets[idx].operate(d, sign)
 }
