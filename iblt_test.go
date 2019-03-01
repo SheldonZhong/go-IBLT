@@ -3,7 +3,6 @@ package iblt
 import (
 	"bytes"
 	"fmt"
-	"github.com/irfansharif/cfilter"
 	"math/rand"
 	"testing"
 	"time"
@@ -152,8 +151,8 @@ func bytesCompare(alpha [][]byte, beta [][]byte) bool {
 }
 
 func TestHash(t *testing.T) {
-	table := NewTable(80,4,4)
-	if err := table.index([]byte{36,122,61,99}); err != nil {
+	table := NewTable(80, 4, 4)
+	if err := table.index([]byte{36, 122, 61, 99}); err != nil {
 		t.Errorf("error index")
 	}
 
@@ -169,12 +168,4 @@ func debugBucket(t *testing.T, table *Table) {
 	for _, bkt := range table.buckets {
 		fmt.Println(bkt)
 	}
-}
-
-func TestCuckoo(t *testing.T) {
-	cf := cfilter.New()
-
-	cf.Insert([]byte{1,2,3})
-	fmt.Println(cf.Lookup([]byte{1,2,3}))
-	fmt.Println(cf.Lookup([]byte{1,2,4}))
 }
