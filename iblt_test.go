@@ -51,7 +51,7 @@ func TestTable_Insert(t *testing.T) {
 
 func TestTable_Decode(t *testing.T) {
 	//seed := time.Now().Unix()
-	seed := int64(1551259270)
+	seed := int64(1551433058)
 	rand.Seed(seed)
 	fmt.Println(seed)
 	tests := []struct {
@@ -63,14 +63,14 @@ func TestTable_Decode(t *testing.T) {
 		sharedItems int
 	}{
 		{4, 4, 80, 20, 30, 20},
-		{4, 4, 80, 40, 20, 20},
+		{4, 4, 80, 40, 10, 20},
 		{4, 4, 120, 30, 30, 0},
-		{4, 4, 1024, 350, 350, 500},
+		{4, 4, 1024, 350, 300, 500},
 		{4, 4, 1024, 700, 0, 500},
 		{4, 4, 1024, 0, 700, 500},
-		{4, 4, 1024, 300, 400, 500},
-		{16, 4, 1024, 150, 550, 6000},
-		{4, 4, 1024, 200, 500, 1000},
+		{4, 4, 1024, 300, 300, 500},
+		{16, 4, 1024, 130, 550, 6000},
+		{4, 4, 1024, 200, 400, 1000},
 	}
 
 	for _, test := range tests {
@@ -114,7 +114,7 @@ func TestTable_Decode(t *testing.T) {
 
 		diff, err := alphaTable.Decode()
 		if err != nil {
-			t.Errorf("test Decode failed error: %v", err)
+			t.Errorf("test Decode failed error: %v, case: %v", err, test)
 		}
 		//debugBucket(t, alphaTable)
 

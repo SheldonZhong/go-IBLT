@@ -164,14 +164,14 @@ func (t *Table) Decode() (*Diff, error) {
 
 // to keep data integrity, number of items should match
 func (t Table) diffCheck(diff *Diff) error {
-	fmt.Println("t.items", t.items)
-	fmt.Println("t.oItems", t.oItems)
-	fmt.Println("AlphaItems", diff.AlphaItems())
-	fmt.Println("BetaItems", diff.BetaItems())
+	//fmt.Println("t.items", t.items)
+	//fmt.Println("t.oItems", t.oItems)
+	//fmt.Println("AlphaItems", diff.AlphaItems())
+	//fmt.Println("BetaItems", diff.BetaItems())
 	commonAlpha := t.items-diff.AlphaItems()
 	commonBeta := t.oItems-diff.BetaItems()
-	fmt.Println("commonAlpha", commonAlpha)
-	fmt.Println("commonBeta", commonBeta)
+	//fmt.Println("commonAlpha", commonAlpha)
+	//fmt.Println("commonBeta", commonBeta)
 
 	if commonAlpha != commonBeta || commonAlpha < 0{
 		return errors.New("number of common elements mismatch")
