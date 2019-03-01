@@ -2,6 +2,7 @@ package iblt
 
 import (
 	"errors"
+	"fmt"
 	"github.com/dchest/siphash"
 	"github.com/golang-collections/collections/queue"
 	"github.com/willf/bitset"
@@ -122,14 +123,17 @@ func (t *Table) Decode() (*Diff, error) {
 		return nil, errors.New("no pure buckets in table")
 	}
 
-	diff := NewDiff()
+	diff := NewDiff(t.bktNum)
 	bkt := NewBucket(t.dataLen)
 	for pure.Len() > 0 {
 		// clean out pure queue, delete all pure buckets and output the stored data
 		// it will create more pure buckets to decode in the next cycle
 		for pure.Len() > 0 {
 			bkt = pure.Dequeue().(*Bucket)
-			diff.encode(bkt)
+			if err = diff.encode(bkt); err != nil {
+				// TODO: handle this
+				fmt.Println("bucket remove")
+			}
 			// Insert if count < 0, Delete if count > 0
 			if err = t.operate(bkt.dataSum, bkt.count < 0); err != nil {
 				return diff, err
@@ -160,7 +164,16 @@ func (t *Table) Decode() (*Diff, error) {
 
 // to keep data integrity, number of items should match
 func (t Table) diffCheck(diff *Diff) error {
-	if t.items-diff.AlphaItems() != t.oItems-diff.BetaItems() {
+	fmt.Println("t.items", t.items)
+	fmt.Println("t.oItems", t.oItems)
+	fmt.Println("AlphaItems", diff.AlphaItems())
+	fmt.Println("BetaItems", diff.BetaItems())
+	commonAlpha := t.items-diff.AlphaItems()
+	commonBeta := t.oItems-diff.BetaItems()
+	fmt.Println("commonAlpha", commonAlpha)
+	fmt.Println("commonBeta", commonBeta)
+
+	if commonAlpha != commonBeta || commonAlpha < 0{
 		return errors.New("number of common elements mismatch")
 	}
 
