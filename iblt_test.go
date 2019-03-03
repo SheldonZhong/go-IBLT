@@ -49,8 +49,8 @@ func TestTable_Insert(t *testing.T) {
 }
 
 func TestTable_Decode(t *testing.T) {
-	//seed := time.Now().Unix()
-	seed := int64(1551433058)
+	seed := time.Now().Unix()
+	//seed := int64(1551433058)
 	rand.Seed(seed)
 	fmt.Println(seed)
 	tests := []struct {

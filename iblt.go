@@ -73,7 +73,7 @@ func (t *Table) index(d []byte) error {
 	}
 
 	t.bitsSet.ClearAll()
-	tries := 0
+	tries := 1
 	for i := 0; i < t.hashNum; {
 		// assume we can always find different keys
 		// as this is in high probability
@@ -186,11 +186,13 @@ func (t *Table) enqueuePure(pure *queue.Queue) error {
 	pureMask := bitset.New(t.bitsSet.Len())
 	for i := range t.buckets {
 		// skip the same pure bucket at difference indexes, enqueue the first one
-		// TODO: add a layer of position check for pure condition
 		if !pureMask.Test(uint(i)) && t.buckets[i] != nil && t.buckets[i].pure() {
-			err := t.index(t.buckets[i].dataSum)
-			if err != nil {
+			if err := t.index(t.buckets[i].dataSum); err != nil {
 				return err
+			}
+			if !t.bitsSet.Test(uint(i)) {
+				// current bucket is a false pure
+				continue
 			}
 			pureMask.InPlaceUnion(t.bitsSet)
 			if bytes.Equal(t.buckets[i].dataSum, []byte{131, 250, 218, 247}) {
