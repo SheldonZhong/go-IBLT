@@ -129,6 +129,9 @@ func (t *Table) Decode() (*Diff, error) {
 		// it will create more pure buckets to decode in the next cycle
 		for pure.Len() > 0 {
 			bkt = pure.Dequeue().(*Bucket)
+			if err = diff.encode(bkt); err != nil {
+				return diff, nil
+			}
 			// Insert if count < 0, Delete if count > 0
 			if err = t.operate(bkt.dataSum, bkt.count < 0); err != nil {
 				return diff, err
