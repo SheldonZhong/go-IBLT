@@ -1,6 +1,7 @@
 package iblt
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/dchest/siphash"
@@ -151,7 +152,8 @@ func (t *Table) Decode() (*Diff, error) {
 	// check if every bucket is empty
 	for i := range t.buckets {
 		if t.buckets[i] != nil && !t.buckets[i].empty() {
-			return diff, errors.New("dirty entries remained")
+			//return diff, errors.New("dirty entries remained")
+			fmt.Println(t.buckets[i], "at", i)
 		}
 	}
 	// check number of elements for the results
@@ -184,12 +186,16 @@ func (t *Table) enqueuePure(pure *queue.Queue) error {
 	pureMask := bitset.New(t.bitsSet.Len())
 	for i := range t.buckets {
 		// skip the same pure bucket at difference indexes, enqueue the first one
+		// TODO: add a layer of position check for pure condition
 		if !pureMask.Test(uint(i)) && t.buckets[i] != nil && t.buckets[i].pure() {
 			err := t.index(t.buckets[i].dataSum)
 			if err != nil {
 				return err
 			}
 			pureMask.InPlaceUnion(t.bitsSet)
+			if bytes.Equal(t.buckets[i].dataSum, []byte{131, 250, 218, 247}) {
+				fmt.Println(t.buckets[i], i)
+			}
 			pure.Enqueue(t.buckets[i])
 		}
 	}

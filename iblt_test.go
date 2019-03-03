@@ -118,11 +118,11 @@ func TestTable_Decode(t *testing.T) {
 		//debugBucket(t, alphaTable)
 
 		if diff.AlphaItems() != test.alphaItems {
-			//bytesCompare(alphaBuff, diff.alpha)
+			bytesCompare(alphaBuff, diff.alpha.set)
 			t.Errorf("decode diff number mismatched alpha want %d, get %d, case: %v", test.alphaItems, diff.AlphaItems(), test)
 		}
 		if diff.BetaItems() != test.betaItems {
-			//bytesCompare(betaBuff, diff.beta)
+			bytesCompare(betaBuff, diff.beta.set)
 			t.Errorf("decode diff number mismatched beta want %d, get %d, case :%v", test.betaItems, diff.BetaItems(), test)
 		}
 		fmt.Println("------------test case ends------------")
@@ -151,8 +151,8 @@ func bytesCompare(alpha [][]byte, beta [][]byte) bool {
 }
 
 func TestHash(t *testing.T) {
-	table := NewTable(80, 4, 4)
-	if err := table.index([]byte{36, 122, 61, 99}); err != nil {
+	table := NewTable(1024, 4, 4)
+	if err := table.index([]byte{131, 250, 218, 247}); err != nil {
 		t.Errorf("error index")
 	}
 
