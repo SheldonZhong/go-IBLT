@@ -1,9 +1,7 @@
 package iblt
 
 import (
-	"bytes"
 	"errors"
-	"fmt"
 	"github.com/dchest/siphash"
 	"github.com/golang-collections/collections/queue"
 	"github.com/willf/bitset"
@@ -131,10 +129,6 @@ func (t *Table) Decode() (*Diff, error) {
 		// it will create more pure buckets to decode in the next cycle
 		for pure.Len() > 0 {
 			bkt = pure.Dequeue().(*Bucket)
-			if err = diff.encode(bkt); err != nil {
-				// TODO: handle this
-				fmt.Println("bucket remove")
-			}
 			// Insert if count < 0, Delete if count > 0
 			if err = t.operate(bkt.dataSum, bkt.count < 0); err != nil {
 				return diff, err
@@ -152,34 +146,11 @@ func (t *Table) Decode() (*Diff, error) {
 	// check if every bucket is empty
 	for i := range t.buckets {
 		if t.buckets[i] != nil && !t.buckets[i].empty() {
-			//return diff, errors.New("dirty entries remained")
-			fmt.Println(t.buckets[i], "at", i)
+			return diff, errors.New("dirty entries remained")
 		}
-	}
-	// check number of elements for the results
-	if err = t.diffCheck(diff); err != nil {
-		return diff, err
 	}
 
 	return diff, nil
-}
-
-// to keep data integrity, number of items should match
-func (t Table) diffCheck(diff *Diff) error {
-	//fmt.Println("t.items", t.items)
-	//fmt.Println("t.oItems", t.oItems)
-	//fmt.Println("AlphaItems", diff.AlphaItems())
-	//fmt.Println("BetaItems", diff.BetaItems())
-	commonAlpha := t.items-diff.AlphaItems()
-	commonBeta := t.oItems-diff.BetaItems()
-	//fmt.Println("commonAlpha", commonAlpha)
-	//fmt.Println("commonBeta", commonBeta)
-
-	if commonAlpha != commonBeta || commonAlpha < 0{
-		return errors.New("number of common elements mismatch")
-	}
-
-	return nil
 }
 
 func (t *Table) enqueuePure(pure *queue.Queue) error {
@@ -195,9 +166,6 @@ func (t *Table) enqueuePure(pure *queue.Queue) error {
 				continue
 			}
 			pureMask.InPlaceUnion(t.bitsSet)
-			if bytes.Equal(t.buckets[i].dataSum, []byte{131, 250, 218, 247}) {
-				fmt.Println(t.buckets[i], i)
-			}
 			pure.Enqueue(t.buckets[i])
 		}
 	}

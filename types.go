@@ -208,16 +208,3 @@ func (d Diff) AlphaItems() int {
 func (d Diff) BetaItems() int {
 	return d.beta.len()
 }
-
-//func (d Diff) String() string {
-//	s := "Symmetric Difference:\n"
-//	for i, b := range d.alpha.len() {
-//		s += fmt.Sprintf("alpha:%d:%v\n", i, b)
-//	}
-//
-//	for i, b := range d.beta {
-//		s += fmt.Sprintf("beta:%d:%v\n", i, b)
-//	}
-//
-//	return s
-//}

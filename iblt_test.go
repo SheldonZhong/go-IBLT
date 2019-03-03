@@ -1,8 +1,6 @@
 package iblt
 
 import (
-	"bytes"
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -50,9 +48,7 @@ func TestTable_Insert(t *testing.T) {
 
 func TestTable_Decode(t *testing.T) {
 	seed := time.Now().Unix()
-	//seed := int64(1551433058)
 	rand.Seed(seed)
-	fmt.Println(seed)
 	tests := []struct {
 		dataLen     int
 		hashNum     int
@@ -115,57 +111,13 @@ func TestTable_Decode(t *testing.T) {
 		if err != nil {
 			t.Errorf("test Decode failed error: %v, case: %v", err, test)
 		}
-		//debugBucket(t, alphaTable)
 
 		if diff.AlphaItems() != test.alphaItems {
-			bytesCompare(alphaBuff, diff.alpha.set)
 			t.Errorf("decode diff number mismatched alpha want %d, get %d, case: %v", test.alphaItems, diff.AlphaItems(), test)
 		}
 		if diff.BetaItems() != test.betaItems {
-			bytesCompare(betaBuff, diff.beta.set)
 			t.Errorf("decode diff number mismatched beta want %d, get %d, case :%v", test.betaItems, diff.BetaItems(), test)
 		}
-		fmt.Println("------------test case ends------------")
 	}
 }
 
-// iterate over beta, for each element print out those does not exist in alpha
-func bytesCompare(alpha [][]byte, beta [][]byte) bool {
-	allFound := true
-	fmt.Print("extra ")
-	for _, b := range beta {
-		found := false
-		for _, a := range alpha {
-			if bytes.Compare(a, b) == 0 {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			fmt.Println(b)
-			allFound = false
-		}
-	}
-	return allFound
-}
-
-func TestHash(t *testing.T) {
-	table := NewTable(1024, 4, 4)
-	if err := table.index([]byte{131, 250, 218, 247}); err != nil {
-		t.Errorf("error index")
-	}
-
-	print := ""
-	for i, e := table.bitsSet.NextSet(0); e; i, e = table.bitsSet.NextSet(i + 1) {
-		print += fmt.Sprintf("%d ", i)
-	}
-
-	fmt.Println(print)
-}
-
-func debugBucket(t *testing.T, table *Table) {
-	for _, bkt := range table.buckets {
-		fmt.Println(bkt)
-	}
-}
