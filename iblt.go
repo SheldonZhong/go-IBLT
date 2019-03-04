@@ -226,7 +226,7 @@ func (t Table) Serialize() ([]byte, error) {
 	}
 
 	for idx, bkt := range t.buckets {
-		if bkt != nil {
+		if bkt != nil && !bkt.empty() {
 			binary.BigEndian.PutUint16(twoBytes, uint16(idx))
 			buffer.Write(twoBytes)
 			binary.BigEndian.PutUint16(twoBytes, uint16(bkt.count))
@@ -248,7 +248,7 @@ func Deserialize(b []byte) (*Table, error) {
 	hashNum := int(binary.BigEndian.Uint16(reader.Next(2)))
 
 	table := NewTable(bktNum, dataLen, hashLen, hashNum)
-	for next := reader.Next(2); len(next) != 0; next = reader.Next(2){
+	for next := reader.Next(2); len(next) != 0; next = reader.Next(2) {
 		idx := binary.BigEndian.Uint16(next)
 		table.buckets[idx] = NewBucket(dataLen, hashLen)
 		table.buckets[idx].count = int(int16(binary.BigEndian.Uint16(reader.Next(2))))
