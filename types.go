@@ -123,6 +123,10 @@ type byteSet struct {
 	filter *cuckoo.Filter
 }
 
+func (s byteSet) slice() [][]byte {
+	return s.set
+}
+
 func newByteSet(cap uint) *byteSet {
 	return &byteSet{
 		set:    make([][]byte, 0),
@@ -134,7 +138,6 @@ func (s byteSet) len() int {
 	return len(s.set)
 }
 
-// TODO: notify the caller by return an error
 func (s *byteSet) insert(b []byte) {
 	if !s.test(b) {
 		s.filter.Insert(b)
@@ -180,6 +183,14 @@ func NewDiff(bktNum uint) *Diff {
 	}
 }
 
+func (d Diff) AlphaSlice() [][]byte {
+	return d.alpha.slice()
+}
+
+func (d Diff) BetaSlice() [][]byte {
+	return d.beta.slice()
+}
+
 // assume b is pure bucket
 func (d *Diff) encode(b *Bucket) error {
 	cpy := make([]byte, len(b.dataSum))
@@ -201,10 +212,10 @@ func (d *Diff) encode(b *Bucket) error {
 	return nil
 }
 
-func (d Diff) AlphaItems() int {
+func (d Diff) AlphaLen() int {
 	return d.alpha.len()
 }
 
-func (d Diff) BetaItems() int {
+func (d Diff) BetaLen() int {
 	return d.beta.len()
 }

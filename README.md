@@ -59,26 +59,26 @@ for set reconciliation
     	tableAlice.Insert(b)
     }
     
-    bytes := tableAlice.Serialized() // WIP: not implemented yet
+    bytes := tableAlice.Serialize() // WIP: not implemented yet
 ```
 and sends the serialized bytes to the other side
 ```go
     // parameters should be the same
-    talbeAlice := iblt.DeSerialized() // WIP: not implemented yet
+    talbeAlice := iblt.Deserialize() // WIP: not implemented yet
     tableBob := iblt.NewTable(1024, 16, 4)
     
     for _, b := range bytesAlice {
-        	tableAlice.Insert(b)
+    	tableAlice.Insert(b)
     }
     
     diff, err := tableBob.Subtract(tableAlice)
     fmt.Println("Bob has and Alice does not have:")
-    for _, b := range diff.Alpha { // WIP: better API
+    for _, b := range diff.AlphaSlice() {
     	fmt.Println(b)
     }
     
     fmt.Println("Alice has and Bob does not have:")
-    for _, b := range diff.Beta { // WIP: better API
+    for _, b := range diff.BetaSlice() {
         fmt.Println(b)
     }
 ```

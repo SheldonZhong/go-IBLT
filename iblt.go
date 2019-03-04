@@ -84,6 +84,15 @@ func (t *Table) index(d []byte) error {
 	return nil
 }
 
+func (t Table) Copy() *Table {
+	rtn := NewTable(t.bktNum, t.dataLen, t.hashNum)
+	for i, bkt := range t.buckets {
+		rtn.buckets[i] = bkt.copy()
+	}
+
+	return rtn
+}
+
 // Modify callee, t = t - a
 func (t *Table) Subtract(a *Table) error {
 	err := t.check(a)
@@ -108,16 +117,16 @@ func (t *Table) Subtract(a *Table) error {
 func (t *Table) Decode() (*Diff, error) {
 	pure := queue.New()
 	err := t.enqueuePure(pure)
+	diff := NewDiff(t.bktNum)
 	if err != nil {
-		return nil, err
+		return diff, err
 	}
 	// ensure we have at least one pure bucket in the IBLT
 	// this is necessary condition for decoding an IBLT
 	if pure.Len() == 0 {
-		return nil, errors.New("no pure buckets in table")
+		return diff, errors.New("no pure buckets in table")
 	}
 
-	diff := NewDiff(t.bktNum)
 	bkt := NewBucket(t.dataLen)
 	for pure.Len() > 0 {
 		// clean out pure queue, delete all pure buckets and output the stored data
@@ -155,7 +164,7 @@ func (t *Table) enqueuePure(pure *queue.Queue) error {
 	pureMask := bitset.New(t.bitsSet.Len())
 	for i := range t.buckets {
 		// skip the same pure bucket at difference indexes, enqueue the first one
-		if !pureMask.Test(uint(i)) && t.buckets[i] != nil && t.buckets[i].pure() {
+		if t.buckets[i] != nil && !pureMask.Test(uint(i)) && t.buckets[i].pure() {
 			if err := t.index(t.buckets[i].dataSum); err != nil {
 				return err
 			}
