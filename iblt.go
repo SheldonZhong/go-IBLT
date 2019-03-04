@@ -11,8 +11,6 @@ type Table struct {
 	dataLen int
 	hashNum int
 	bktNum  uint
-	items   int
-	oItems  int
 	buckets []*Bucket
 	bitsSet *bitset.BitSet
 }
@@ -32,7 +30,6 @@ func (t *Table) Insert(d []byte) error {
 	if err := t.operate(d, true); err != nil {
 		return err
 	}
-	t.items++
 
 	return nil
 }
@@ -41,7 +38,6 @@ func (t *Table) Delete(d []byte) error {
 	if err := t.operate(d, false); err != nil {
 		return err
 	}
-	t.items--
 
 	return nil
 }
@@ -104,7 +100,6 @@ func (t *Table) Subtract(a *Table) error {
 			t.buckets[i].count = -t.buckets[i].count
 		}
 	}
-	t.oItems = a.items
 
 	return nil
 }
