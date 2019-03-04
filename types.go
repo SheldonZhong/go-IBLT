@@ -14,14 +14,15 @@ const (
 	key1 = 629
 )
 
-func sipHash(b []byte) uint64 {
+func sipHash(b []byte) []byte {
 	// TODO: key constants
-	return siphash.Hash(key0, key1, b)
+	h := siphash.Hash(key0, key1, b)
+	rtn := make([]byte, 8)
+	binary.BigEndian.PutUint64(rtn, h)
+	return rtn
 }
 
-type data []byte
-type hash []byte
-
+// bounds check before calling, len(dst) <= len(src)
 func xor(dst []byte, src []byte) {
 	for i, v := range dst {
 		dst[i] = v ^ src[i]
@@ -34,48 +35,36 @@ func empty(b []byte) bool {
 			return false
 		}
 	}
-
 	return true
 }
 
-func (d data) xor(a data) {
-	xor(d, a)
-}
-
-func (d data) empty() bool {
-	return empty(d)
-}
-
-func (d hash) xor(a hash) {
-	xor(d, a)
-}
-
-func (d hash) empty() bool {
-	return empty(d)
+// bounds check before calling, len(a) <= len(b)
+func equalPrefix(a, b []byte) bool {
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 type Bucket struct {
-	dataSum data
-	hashSum hash
+	dataSum []byte
+	hashSum []byte
 	count   int
 }
 
-func NewBucket(len int) *Bucket {
+func NewBucket(dataLen, hashLen int) *Bucket {
 	return &Bucket{
-		dataSum: make(data, len),
-		hashSum: make(hash, 1),// TODO: configurable
+		dataSum: make([]byte, dataLen),
+		hashSum: make([]byte, hashLen),
 		count:   0,
 	}
 }
 
 func (b *Bucket) xor(a *Bucket) {
-	b.dataSum.xor(a.dataSum)
-	b.hashSum.xor(a.hashSum)
-}
-
-func (b *Bucket) add(a *Bucket) {
-	b.xor(a)
-	b.count = b.count + a.count
+	xor(b.dataSum, a.dataSum)
+	xor(b.hashSum, a.hashSum)
 }
 
 func (b *Bucket) subtract(a *Bucket) {
@@ -83,10 +72,10 @@ func (b *Bucket) subtract(a *Bucket) {
 	b.count = b.count - a.count
 }
 
-func (b *Bucket) operate(d data, sign bool) {
-	b.dataSum.xor(d)
+func (b *Bucket) operate(d []byte, sign bool) {
+	xor(b.dataSum, d)
 	h := sipHash(d)
-	b.hashSum.xor(h)
+	xor(b.hashSum, h)
 	if sign {
 		b.count++
 	} else {
@@ -95,7 +84,7 @@ func (b *Bucket) operate(d data, sign bool) {
 }
 
 func (b Bucket) copy() *Bucket {
-	bkt := NewBucket(len(b.dataSum))
+	bkt := NewBucket(len(b.dataSum), len(b.hashSum))
 	copy(bkt.dataSum, b.dataSum)
 	bkt.hashSum = b.hashSum
 	bkt.count = b.count
@@ -105,7 +94,7 @@ func (b Bucket) copy() *Bucket {
 func (b Bucket) pure() bool {
 	if b.count == 1 || b.count == -1 {
 		h := sipHash(b.dataSum)
-		if b.hashSum == hash(h) {
+		if equalPrefix(b.hashSum, h) {
 			return true
 		}
 	}
@@ -114,8 +103,8 @@ func (b Bucket) pure() bool {
 
 func (b Bucket) empty() bool {
 	return b.count == 0 &&
-		b.hashSum.empty() &&
-		b.dataSum.empty()
+		empty(b.hashSum) &&
+		empty(b.dataSum)
 }
 
 func (b Bucket) String() string {

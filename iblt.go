@@ -11,6 +11,7 @@ import (
 
 type Table struct {
 	dataLen int
+	hashLen int
 	hashNum int
 	bktNum  uint
 	buckets []*Bucket
@@ -18,9 +19,10 @@ type Table struct {
 }
 
 // Specify number of buckets, data field length (in byte), number of hash functions
-func NewTable(buckets uint, dataLen int, hashNum int, ) *Table {
+func NewTable(buckets uint, dataLen int, hashLen int, hashNum int, ) *Table {
 	return &Table{
 		dataLen: dataLen,
+		hashLen: hashLen,
 		hashNum: hashNum,
 		bktNum:  buckets,
 		buckets: make([]*Bucket, buckets),
@@ -87,7 +89,7 @@ func (t *Table) index(d []byte) error {
 }
 
 func (t Table) Copy() *Table {
-	rtn := NewTable(t.bktNum, t.dataLen, t.hashNum)
+	rtn := NewTable(t.bktNum, t.dataLen, t.hashLen, t.hashNum)
 	for i, bkt := range t.buckets {
 		rtn.buckets[i] = bkt.copy()
 	}
@@ -129,7 +131,7 @@ func (t *Table) Decode() (*Diff, error) {
 		return diff, errors.New("no pure buckets in table")
 	}
 
-	bkt := NewBucket(t.dataLen)
+	bkt := NewBucket(t.dataLen, t.hashLen)
 	for pure.Len() > 0 {
 		// clean out pure queue, delete all pure buckets and output the stored data
 		// it will create more pure buckets to decode in the next cycle
@@ -190,6 +192,10 @@ func (t Table) check(a *Table) error {
 		return errors.New("subtract table mismatches data length")
 	}
 
+	if t.hashLen != a.hashLen {
+		return errors.New("subtract table mismatches hash length")
+	}
+
 	if t.hashNum != a.hashNum {
 		return errors.New("subtract table mismatches number of hash functions")
 	}
@@ -203,7 +209,7 @@ func (t Table) check(a *Table) error {
 
 func (t *Table) operateBucket(idx uint, d []byte, sign bool) {
 	if t.buckets[idx] == nil {
-		t.buckets[idx] = NewBucket(t.dataLen)
+		t.buckets[idx] = NewBucket(t.dataLen, t.hashLen)
 	}
 	t.buckets[idx].operate(d, sign)
 }
@@ -212,7 +218,7 @@ func (t Table) Serialize() ([]byte, error) {
 	var buffer bytes.Buffer
 	var twoBytes []byte
 
-	for _, unsigned := range []uint16{uint16(t.bktNum), uint16(t.hashNum), uint16(t.dataLen)} {
+	for _, unsigned := range []uint16{uint16(t.bktNum), uint16(t.hashNum), uint16(t.dataLen), uint16(t.hashLen),} {
 		binary.BigEndian.PutUint16(twoBytes, uint16(unsigned))
 		buffer.Write(twoBytes)
 	}
@@ -226,8 +232,9 @@ func (t Table) Serialize() ([]byte, error) {
 		buffer.Write(bkt.dataSum)
 		buffer.Write(bkt.hashSum)
 	}
+	return nil, nil
 }
 
 func Deserialize(b []byte) (*Table, error) {
-
+	return nil, nil
 }
