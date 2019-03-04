@@ -42,7 +42,7 @@ without addition
     // number of bucket is 80
     // an item is a byte slice of 16 bytes
     // use 4 hash function, i.e., four different locations
-    table := iblt.NewTable(80, 16, 4)
+    table := iblt.NewTable(80, 16, 1, 4)
     
     for _, b := range bytes {
     	table.Insert(b)
@@ -53,19 +53,19 @@ without addition
 
 for set reconciliation
 ```go
-    tableAlice := iblt.NewTable(1024, 16, 4)
+    tableAlice := iblt.NewTable(1024, 16, 1, 4)
     
     for _, b := range bytesAlice {
     	tableAlice.Insert(b)
     }
     
-    bytes := tableAlice.Serialize() // WIP: not implemented yet
+    bytes := tableAlice.Serialize()
 ```
 and sends the serialized bytes to the other side
 ```go
     // parameters should be the same
-    talbeAlice := iblt.Deserialize() // WIP: not implemented yet
-    tableBob := iblt.NewTable(1024, 16, 4)
+    talbeAlice := iblt.Deserialize(bytes)
+    tableBob := iblt.NewTable(1024, 16, 1, 4)
     
     for _, b := range bytesAlice {
     	tableAlice.Insert(b)

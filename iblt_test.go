@@ -169,14 +169,17 @@ func TestTableEncodeDecode(t *testing.T) {
 			}
 		}
 		cpy := table.Copy()
+
 		enc, err := table.Serialize()
 		if err != nil {
 			t.Errorf("table serialize error %v", err)
 		}
+
 		rec, err := Deserialize(enc)
 		if err != nil {
 			t.Errorf("recovery from bytes error %v", err)
 		}
+
 		if rec.bktNum != cpy.bktNum {
 			t.Errorf("recoveried bktNum not equal, want %v, get %v", cpy.bktNum, rec.bktNum)
 		}
