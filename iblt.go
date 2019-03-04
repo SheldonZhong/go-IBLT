@@ -10,10 +10,10 @@ import (
 )
 
 type Table struct {
+	bktNum  uint
 	dataLen int
 	hashLen int
 	hashNum int
-	bktNum  uint
 	buckets []*Bucket
 	bitsSet *bitset.BitSet
 }
@@ -21,10 +21,10 @@ type Table struct {
 // Specify number of buckets, data field length (in byte), number of hash functions
 func NewTable(buckets uint, dataLen int, hashLen int, hashNum int, ) *Table {
 	return &Table{
+		bktNum:  buckets,
 		dataLen: dataLen,
 		hashLen: hashLen,
 		hashNum: hashNum,
-		bktNum:  buckets,
 		buckets: make([]*Bucket, buckets),
 		bitsSet: bitset.New(buckets),
 	}
@@ -91,7 +91,9 @@ func (t *Table) index(d []byte) error {
 func (t Table) Copy() *Table {
 	rtn := NewTable(t.bktNum, t.dataLen, t.hashLen, t.hashNum)
 	for i, bkt := range t.buckets {
-		rtn.buckets[i] = bkt.copy()
+		if bkt != nil {
+			rtn.buckets[i] = bkt.copy()
+		}
 	}
 
 	return rtn
@@ -216,25 +218,43 @@ func (t *Table) operateBucket(idx uint, d []byte, sign bool) {
 
 func (t Table) Serialize() ([]byte, error) {
 	var buffer bytes.Buffer
-	var twoBytes []byte
+	twoBytes := make([]byte, 2)
 
-	for _, unsigned := range []uint16{uint16(t.bktNum), uint16(t.hashNum), uint16(t.dataLen), uint16(t.hashLen),} {
+	for _, unsigned := range []uint16{uint16(t.bktNum), uint16(t.dataLen), uint16(t.hashLen), uint16(t.hashNum),} {
 		binary.BigEndian.PutUint16(twoBytes, uint16(unsigned))
 		buffer.Write(twoBytes)
 	}
 
 	for idx, bkt := range t.buckets {
-		binary.BigEndian.PutUint16(twoBytes, uint16(idx))
-		buffer.Write(twoBytes)
-		binary.BigEndian.PutUint16(twoBytes, uint16(bkt.count))
-		buffer.Write(twoBytes)
+		if bkt != nil {
+			binary.BigEndian.PutUint16(twoBytes, uint16(idx))
+			buffer.Write(twoBytes)
+			binary.BigEndian.PutUint16(twoBytes, uint16(bkt.count))
+			buffer.Write(twoBytes)
 
-		buffer.Write(bkt.dataSum)
-		buffer.Write(bkt.hashSum)
+			buffer.Write(bkt.dataSum)
+			buffer.Write(bkt.hashSum)
+		}
 	}
-	return nil, nil
+	return buffer.Bytes(), nil
 }
 
 func Deserialize(b []byte) (*Table, error) {
-	return nil, nil
+	reader := bytes.NewBuffer(b)
+
+	bktNum := uint(binary.BigEndian.Uint16(reader.Next(2)))
+	dataLen := int(binary.BigEndian.Uint16(reader.Next(2)))
+	hashLen := int(binary.BigEndian.Uint16(reader.Next(2)))
+	hashNum := int(binary.BigEndian.Uint16(reader.Next(2)))
+
+	table := NewTable(bktNum, dataLen, hashLen, hashNum)
+	for next := reader.Next(2); len(next) != 0; next = reader.Next(2){
+		idx := binary.BigEndian.Uint16(next)
+		table.buckets[idx] = NewBucket(dataLen, hashLen)
+		table.buckets[idx].count = int(int16(binary.BigEndian.Uint16(reader.Next(2))))
+		copy(table.buckets[idx].dataSum, reader.Next(dataLen))
+		copy(table.buckets[idx].hashSum, reader.Next(hashLen))
+	}
+
+	return table, nil
 }
