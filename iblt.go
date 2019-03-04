@@ -1,6 +1,8 @@
 package iblt
 
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
 	"github.com/dchest/siphash"
 	"github.com/golang-collections/collections/queue"
@@ -204,4 +206,28 @@ func (t *Table) operateBucket(idx uint, d []byte, sign bool) {
 		t.buckets[idx] = NewBucket(t.dataLen)
 	}
 	t.buckets[idx].operate(d, sign)
+}
+
+func (t Table) Serialize() ([]byte, error) {
+	var buffer bytes.Buffer
+	var twoBytes []byte
+
+	for _, unsigned := range []uint16{uint16(t.bktNum), uint16(t.hashNum), uint16(t.dataLen)} {
+		binary.BigEndian.PutUint16(twoBytes, uint16(unsigned))
+		buffer.Write(twoBytes)
+	}
+
+	for idx, bkt := range t.buckets {
+		binary.BigEndian.PutUint16(twoBytes, uint16(idx))
+		buffer.Write(twoBytes)
+		binary.BigEndian.PutUint16(twoBytes, uint16(bkt.count))
+		buffer.Write(twoBytes)
+
+		buffer.Write(bkt.dataSum)
+		buffer.Write(bkt.hashSum)
+	}
+}
+
+func Deserialize(b []byte) (*Table, error) {
+
 }

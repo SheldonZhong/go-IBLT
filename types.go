@@ -2,6 +2,7 @@ package iblt
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"github.com/dchest/siphash"
 	"github.com/pkg/errors"
@@ -19,7 +20,7 @@ func sipHash(b []byte) uint64 {
 }
 
 type data []byte
-type hash byte
+type hash []byte
 
 func xor(dst []byte, src []byte) {
 	for i, v := range dst {
@@ -27,12 +28,8 @@ func xor(dst []byte, src []byte) {
 	}
 }
 
-func (d data) xor(a data) {
-	xor(d, a)
-}
-
-func (d data) empty() bool {
-	for _, v := range d {
+func empty(b []byte) bool {
+	for _, v := range b {
 		if v != byte(0) {
 			return false
 		}
@@ -41,12 +38,20 @@ func (d data) empty() bool {
 	return true
 }
 
-func (d *hash) xor(a hash) {
-	*d = *d ^ a
+func (d data) xor(a data) {
+	xor(d, a)
+}
+
+func (d data) empty() bool {
+	return empty(d)
+}
+
+func (d hash) xor(a hash) {
+	xor(d, a)
 }
 
 func (d hash) empty() bool {
-	return d == hash(0)
+	return empty(d)
 }
 
 type Bucket struct {
@@ -58,7 +63,7 @@ type Bucket struct {
 func NewBucket(len int) *Bucket {
 	return &Bucket{
 		dataSum: make(data, len),
-		hashSum: hash(0),
+		hashSum: make(hash, 1),// TODO: configurable
 		count:   0,
 	}
 }
@@ -81,7 +86,7 @@ func (b *Bucket) subtract(a *Bucket) {
 func (b *Bucket) operate(d data, sign bool) {
 	b.dataSum.xor(d)
 	h := sipHash(d)
-	b.hashSum.xor(hash(h))
+	b.hashSum.xor(h)
 	if sign {
 		b.count++
 	} else {

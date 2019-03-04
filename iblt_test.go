@@ -2,6 +2,7 @@ package iblt
 
 import (
 	"math/rand"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -149,32 +150,37 @@ func TestTable_Delete(t *testing.T) {
 		}
 	}
 }
-//
-//func TestTableEncodeDecode(t *testing.T) {
-//	seed := time.Now().Unix()
-//	rand.Seed(seed)
-//
-//	for _, test := range tests {
-//		table := NewTable(test.bktNum, test.dataLen, test.hashNum)
-//		b := make([]byte, test.dataLen)
-//		for i := 0; i < test.alphaItems; i ++ {
-//			rand.Read(b)
-//			if err := table.Insert(b); err != nil {
-//				t.Errorf("test Insert failed error: %v", err)
-//			}
-//		}
-//		for i := 0; i < test.betaItems; i ++ {
-//			rand.Read(b)
-//			if err := table.Delete(b); err != nil {
-//				t.Errorf("test Delete failed error: %v", err)
-//			}
-//		}
-//		cpy := table.Copy()
-//		enc, err := table.Serialize()
-//		if err != nil {
-//			t.Errorf("table serialize error %v", err)
-//		}
-//		rec := Deserialize(enc)
-//
-//	}
-//}
+
+func TestTableEncodeDecode(t *testing.T) {
+	seed := time.Now().Unix()
+	rand.Seed(seed)
+
+	for _, test := range tests {
+		table := NewTable(test.bktNum, test.dataLen, test.hashNum)
+		b := make([]byte, test.dataLen)
+		for i := 0; i < test.alphaItems; i ++ {
+			rand.Read(b)
+			if err := table.Insert(b); err != nil {
+				t.Errorf("test Insert failed error: %v", err)
+			}
+		}
+		for i := 0; i < test.betaItems; i ++ {
+			rand.Read(b)
+			if err := table.Delete(b); err != nil {
+				t.Errorf("test Delete failed error: %v", err)
+			}
+		}
+		cpy := table.Copy()
+		enc, err := table.Serialize()
+		if err != nil {
+			t.Errorf("table serialize error %v", err)
+		}
+		rec, err := Deserialize(enc)
+		if err != nil {
+			t.Errorf("recovery from bytes error %v", err)
+		}
+		if !reflect.DeepEqual(rec, cpy) {
+			t.Errorf("recoveried IBLT not equal, want %v, get %v", cpy, rec)
+		}
+	}
+}
