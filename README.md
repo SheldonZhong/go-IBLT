@@ -85,4 +85,6 @@ and sends the serialized bytes to the other side
 ## References
 
 [1] Invertible Bloom Filter was first proposed in [Straggler Identification in Round-Trip Data Streams via Newton's Identities and Invertible Bloom Filters](https://arxiv.org/abs/0704.3313).  
-[2] ...
+[2] The author further improved the designed in [Invertible Bloom Lookup Tables](https://arxiv.org/abs/1101.2245)
+[3] This is where subtraction between IBLT is proposed: [What’s the Difference?
+     Efficient Set Reconciliation without Prior Context](https://www.ics.uci.edu/~eppstein/pubs/EppGooUye-SIGCOMM-11.pdf)
