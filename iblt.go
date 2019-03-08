@@ -121,9 +121,13 @@ func (t *Table) Subtract(a *Table) error {
 
 // Decode is self-destructive
 func (t *Table) Decode() (*Diff, error) {
+	diff := NewDiff(t.bktNum)
+	if t.empty() {
+		return diff, nil
+	}
+
 	pure := queue.New()
 	err := t.enqueuePure(pure)
-	diff := NewDiff(t.bktNum)
 	if err != nil {
 		return diff, err
 	}
@@ -157,13 +161,20 @@ func (t *Table) Decode() (*Diff, error) {
 		// 2) we have hash collision for more than two items
 	}
 	// check if every bucket is empty
-	for i := range t.buckets {
-		if t.buckets[i] != nil && !t.buckets[i].empty() {
-			return diff, errors.New("dirty entries remained")
-		}
+	if !t.empty() {
+		return diff, errors.New("dirty entries remained")
 	}
 
 	return diff, nil
+}
+
+func (t Table) empty() bool {
+	for i := range t.buckets {
+		if t.buckets[i] != nil && !t.buckets[i].empty() {
+			return false
+		}
+	}
+	return true
 }
 
 func (t *Table) enqueuePure(pure *queue.Queue) error {
