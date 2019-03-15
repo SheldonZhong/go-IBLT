@@ -178,6 +178,7 @@ func (t Table) empty() bool {
 }
 
 func (t *Table) enqueuePure(pure *queue.Queue) error {
+	// TODO: mark empty bucket and skip early
 	pureMask := bitset.New(t.bitsSet.Len())
 	for i := range t.buckets {
 		// skip the same pure bucket at difference indexes, enqueue the first one

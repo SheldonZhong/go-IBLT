@@ -1,0 +1,47 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"path": "-tree",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "CCFJBDs3fGx3AIfbpCNTzNbw5P4=",
+			"path": "github.com/dchest/siphash",
+			"revision": "34f201214d993633bb24f418ba11736ab8b55aa7",
+			"revisionTime": "2018-08-18T19:55:58Z"
+		},
+		{
+			"checksumSHA1": "/zAE0hTJhwrYvwpcbQQpeim5UIk=",
+			"path": "github.com/dgryski/go-metro",
+			"revision": "280f6062b5bc97ee9b9afe7f2ccb361e59845baa",
+			"revisionTime": "2018-01-09T04:46:35Z"
+		},
+		{
+			"checksumSHA1": "+xSCWoif0TWZ8MuZOvTgpj3PKEc=",
+			"path": "github.com/golang-collections/collections/queue",
+			"revision": "604e922904d35e97f98a774db7881f049cd8d970",
+			"revisionTime": "2013-07-29T18:54:59Z"
+		},
+		{
+			"checksumSHA1": "I7hloldMJZTqUx6hbVDp5nk9fZQ=",
+			"path": "github.com/pkg/errors",
+			"revision": "27936f6d90f9c8e1145f11ed52ffffbfdb9e0af7",
+			"revisionTime": "2019-02-27T00:00:51Z"
+		},
+		{
+			"checksumSHA1": "fEn7hkc18IfjLXL9N6TKm+5dnfA=",
+			"path": "github.com/seiflotfy/cuckoofilter",
+			"revision": "764cb5258d9bcd276f2f809e74cfa206d8e8e054",
+			"revisionTime": "2019-03-02T22:52:22Z"
+		},
+		{
+			"checksumSHA1": "Pw49QR3vpeMuxJ3lGh4nvYrhKBU=",
+			"path": "github.com/willf/bitset",
+			"revision": "18bd95f470f9494ca07c36d877424729edc2455c",
+			"revisionTime": "2019-02-28T21:25:26Z"
+		}
+	],
+	"rootPath": "github.com/SheldonZhong/go-IBLT"
+}
