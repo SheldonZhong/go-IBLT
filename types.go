@@ -3,9 +3,9 @@ package iblt
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"github.com/dchest/siphash"
-	"github.com/pkg/errors"
 	"github.com/seiflotfy/cuckoofilter"
 )
 
